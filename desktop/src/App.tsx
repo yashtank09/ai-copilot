@@ -18,8 +18,12 @@ import {
   TrendingUp,
   Award,
   Zap,
-  Mic
+  Mic,
+  X,
+  Minus,
+  Square
 } from "lucide-react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const defaultHistory: MeetingLog[] = [
   {
@@ -282,10 +286,33 @@ function App() {
   return (
     <div
       style={fontStyle}
-      className={`app-container flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-200 select-none ${
-        isCompact ? "max-w-[360px] max-h-[600px] border-2 border-primary-500/50" : ""
+      className={`app-container flex flex-col h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 select-none ${
+        isCompact ? "max-w-[360px] max-h-[600px] border-2 border-primary-500/50" : "border border-slate-300 dark:border-slate-800"
       }`}
     >
+      {/* Custom Titlebar */}
+      <div 
+        data-tauri-drag-region 
+        className="h-8 flex shrink-0 items-center justify-between px-3 bg-slate-200/50 dark:bg-slate-900/50 border-b border-slate-300/50 dark:border-slate-800/50 select-none"
+      >
+        <div data-tauri-drag-region className="flex items-center gap-2 flex-1 h-full">
+           <div className="h-3 w-3 rounded-full bg-primary-500 opacity-80" />
+           <span data-tauri-drag-region className="text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-wider">AI COPILOT</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => getCurrentWindow().minimize()} className="p-1 hover:bg-slate-300 dark:hover:bg-slate-800 rounded text-slate-500 transition-colors">
+            <Minus className="h-3.5 w-3.5" />
+          </button>
+          <button onClick={() => getCurrentWindow().toggleMaximize()} className="p-1 hover:bg-slate-300 dark:hover:bg-slate-800 rounded text-slate-500 transition-colors">
+            <Square className="h-3 w-3" />
+          </button>
+          <button onClick={() => getCurrentWindow().close()} className="p-1 hover:bg-red-500 hover:text-white rounded text-slate-500 transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
       {/* Sidebar Navigation */}
       <aside
         className={`flex flex-col border-r border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-900 transition-all duration-300 shrink-0 ${
@@ -514,6 +541,7 @@ function App() {
           )}
         </div>
       </main>
+      </div>
     </div>
   );
 }

@@ -22,7 +22,7 @@ pub fn start_audio_loopback(app: AppHandle, state: tauri::State<'_, AudioState>)
     
     let stream = match config.sample_format() {
         cpal::SampleFormat::F32 => device.build_input_stream(
-            &config.into(),
+            config.config(),
             move |data: &[f32], _: &_| {
                 // Forward the raw f32 frames to the React frontend.
                 // Note: In production, downsample or chunk this to avoid IPC bottlenecks.

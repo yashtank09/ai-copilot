@@ -8,6 +8,7 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { GeminiService } from './gemini.service';
 
 @WebSocketGateway({
   cors: {
@@ -15,6 +16,8 @@ import { Server, Socket } from 'socket.io';
   },
 })
 export class AudioGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  constructor(private readonly geminiService: GeminiService) {}
+
   @WebSocketServer()
   server: Server;
 
@@ -27,19 +30,24 @@ export class AudioGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('audio_chunk')
-  handleAudioChunk(
+  async handleAudioChunk(
     @MessageBody() data: any,
     @ConnectedSocket() client: Socket,
   ) {
-    // Basic mock handling of an audio chunk from Desktop App
-    // We would buffer this or send to a transcription service
-    console.log(`Received audio from ${client.id}`);
+    console.log(`Received request from ${client.id} - Provider: ${data.provider}`);
     
-    // Echo back a mock AI response for now to test end-to-end
+    // Process through the new GeminiService
+    const insightResponse = await this.geminiService.generateDynamicContent({
+      text: data.payload,
+      mode: data.mode,
+      apiKey: data.apiKey,
+      model: data.model
+    });
+    
     client.emit('ai_insight', {
       type: 'ai_insight',
-      insight_type: 'answer_suggestion',
-      content: 'Mock AI: I am listening to the meeting! This is a test response.',
+      insight_type: data.mode || 'general',
+      content: insightResponse,
       confidence: 0.99,
     });
   }

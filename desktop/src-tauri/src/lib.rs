@@ -1,7 +1,11 @@
 mod audio;
+mod ghost_mode;
+mod window_controls;
 
 use std::sync::Mutex;
 use audio::{start_audio_loopback, stop_audio_loopback, AudioState};
+use ghost_mode::toggle_ghost_mode;
+use window_controls::set_window_opacity;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
@@ -18,7 +22,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             greet,
             start_audio_loopback,
-            stop_audio_loopback
+            stop_audio_loopback,
+            toggle_ghost_mode,
+            set_window_opacity
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

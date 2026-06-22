@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import {
   Laptop,
   Sun,
@@ -12,7 +13,10 @@ import {
   Cpu,
   Check,
   FileJson,
-  FileText
+  FileText,
+  Ghost,
+  Shield,
+  Layers
 } from "lucide-react";
 
 export interface DisplaySettings {
@@ -60,6 +64,67 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<TabType>("display");
   const [showApiKey, setShowApiKey] = useState(false);
   const [successExportId, setSuccessExportId] = useState<string | null>(null);
+  const [ghostMode, setGhostMode] = useState(false);
+  const [ghostModeLoading, setGhostModeLoading] = useState(false);
+  const [ghostModeError, setGhostModeError] = useState<string | null>(null);
+
+  // Restore ghost mode from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("ghostMode");
+    if (saved === "true") {
+      setGhostMode(true);
+      // Re-apply ghost mode to the native window on re-mount
+      invoke("toggle_ghost_mode", { enabled: true }).catch((err) =>
+        console.warn("Failed to restore ghost mode:", err)
+      );
+    }
+  }, []);
+
+  const handleToggleGhostMode = async () => {
+    const next = !ghostMode;
+    setGhostModeLoading(true);
+    setGhostModeError(null);
+
+    try {
+      await invoke("toggle_ghost_mode", { enabled: next });
+      setGhostMode(next);
+      localStorage.setItem("ghostMode", String(next));
+    } catch (err: any) {
+      console.error("Ghost mode toggle failed:", err);
+      setGhostModeError(typeof err === "string" ? err : err?.message ?? "Unknown error");
+    } finally {
+      setGhostModeLoading(false);
+    }
+  };
+
+  // ── Window Opacity ──────────────────────────────────────────────
+  const [windowOpacity, setWindowOpacity] = useState(() => {
+    const saved = localStorage.getItem("windowOpacity");
+    return saved ? parseInt(saved, 10) : 100;
+  });
+  const opacityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Restore opacity on mount
+  useEffect(() => {
+    if (windowOpacity < 100) {
+      invoke("set_window_opacity", { opacity: windowOpacity / 100 }).catch((err) =>
+        console.warn("Failed to restore window opacity:", err)
+      );
+    }
+  }, []);
+
+  const handleOpacityChange = (value: number) => {
+    setWindowOpacity(value);
+    localStorage.setItem("windowOpacity", String(value));
+
+    // Debounce the native call (50ms)
+    if (opacityTimerRef.current) clearTimeout(opacityTimerRef.current);
+    opacityTimerRef.current = setTimeout(() => {
+      invoke("set_window_opacity", { opacity: value / 100 }).catch((err) =>
+        console.error("Failed to set window opacity:", err)
+      );
+    }, 50)
+  };
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: "display", label: "Display", icon: <Sliders className="h-4 w-4" /> },
@@ -207,6 +272,96 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
                   <span>20px (Larger)</span>
                 </div>
               </div>
+            </div>
+
+            {/* ── Window Opacity ──────────────────────────── */}
+            <div>
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Layers className="h-3.5 w-3.5" />
+                Window Opacity
+              </h3>
+              <div className="p-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                <div className="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                  <span>Transparency Level</span>
+                  <span className="font-mono text-primary-500">{windowOpacity}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="100"
+                  step="5"
+                  value={windowOpacity}
+                  onChange={(e) => handleOpacityChange(parseInt(e.target.value))}
+                  className="w-full accent-primary-500 cursor-pointer"
+                />
+                <div className="flex justify-between text-[10px] text-slate-400 px-1 mt-1">
+                  <span>10% (Faint)</span>
+                  <span>50% (Semi)</span>
+                  <span>100% (Solid)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Ghost Mode ──────────────────────────────── */}
+            <div>
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5" />
+                Privacy & Stealth
+              </h3>
+              <div
+                className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
+                  ghostMode
+                    ? "border-violet-500/40 bg-violet-500/5 dark:bg-violet-500/10 shadow-sm shadow-violet-500/10"
+                    : "border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20"
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center transition-colors ${
+                    ghostMode
+                      ? "bg-violet-500 text-white shadow-md shadow-violet-500/25"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-400"
+                  }`}>
+                    <Ghost className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-100">Ghost Mode</span>
+                      {ghostMode && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 uppercase tracking-wide">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-400 leading-snug mt-0.5">
+                      Hide from screen share, recordings &amp; taskbar
+                    </p>
+                  </div>
+                </div>
+
+                {/* Toggle switch */}
+                <button
+                  type="button"
+                  onClick={handleToggleGhostMode}
+                  disabled={ghostModeLoading}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors shrink-0 ${
+                    ghostMode ? "bg-violet-500" : "bg-slate-300 dark:bg-slate-700"
+                  } ${ghostModeLoading ? "opacity-50 cursor-wait" : "cursor-pointer"}`}
+                  role="switch"
+                  aria-checked={ghostMode}
+                  aria-label="Toggle ghost mode"
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${
+                      ghostMode ? "translate-x-[18px]" : "translate-x-[3px]"
+                    }`}
+                  />
+                </button>
+              </div>
+              {ghostModeError && (
+                <p className="mt-2 text-[10px] text-red-500 font-medium px-1">
+                  ⚠️ {ghostModeError}
+                </p>
+              )}
             </div>
           </div>
         )}

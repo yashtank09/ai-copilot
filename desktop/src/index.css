@@ -10,12 +10,21 @@ html, body, #root {
   padding: 0;
 }
 
+/* ── Prevent accidental drag on non-drag regions ──────────────────── */
+body {
+  -webkit-app-region: no-drag;
+}
+
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
   --font-serif: 'Outfit', 'Georgia', 'Times New Roman', serif;
   
   --animate-pulse-ring: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-fade-in: fade-in 0.3s ease-out forwards;
+  --animate-slide-up: slide-up 0.3s ease-out forwards;
+  --animate-bounce-dot: bounce-dot 1.4s infinite ease-in-out both;
+  --animate-spin-slow: spin 8s linear infinite;
 
   --color-primary-50: var(--theme-50);
   --color-primary-100: var(--theme-100);
@@ -100,6 +109,8 @@ html, body, #root {
   --theme-950: #2e1065;
 }
 
+/* ── Keyframes ─────────────────────────────────────────────────────── */
+
 @keyframes pulse-ring {
   0% {
     transform: scale(0.92);
@@ -115,7 +126,39 @@ html, body, #root {
   }
 }
 
-/* Custom Scrollbars */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce-dot {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* ── Custom Scrollbars ─────────────────────────────────────────────── */
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -134,7 +177,6 @@ html, body, #root {
   background: rgba(156, 163, 175, 0.45);
 }
 
-/* Custom styles & scroll effects */
 .dark ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
 }
@@ -143,7 +185,8 @@ html, body, #root {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* High Fidelity Glassmorphism */
+/* ── Glassmorphism ─────────────────────────────────────────────────── */
+
 .glass-panel {
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(16px);
@@ -158,7 +201,24 @@ html, body, #root {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Smooth system-wide font scale transition */
+/* ── Cursor consistency for frameless window ───────────────────────── */
+
 .app-container {
+  cursor: default;
   transition: font-size 0.2s ease, font-family 0.2s ease;
+}
+
+[data-tauri-drag-region] {
+  cursor: grab;
+  -webkit-app-region: drag;
+}
+
+[data-tauri-drag-region]:active {
+  cursor: grabbing;
+}
+
+/* Buttons inside drag region must be non-draggable */
+[data-tauri-drag-region] button,
+[data-tauri-drag-region] a {
+  -webkit-app-region: no-drag;
 }

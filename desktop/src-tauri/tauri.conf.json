@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "desktop",
+  "productName": "AI Meeting Copilot",
   "version": "0.1.0",
   "identifier": "com.ai.copilot",
   "build": {
@@ -12,9 +12,12 @@
   "app": {
     "windows": [
       {
-        "title": "desktop",
+        "title": "AI Copilot",
         "width": 1000,
         "height": 720,
+        "minWidth": 360,
+        "minHeight": 480,
+        "resizable": true,
         "decorations": false
       }
     ],

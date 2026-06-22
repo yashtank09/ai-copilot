@@ -287,7 +287,7 @@ function App() {
     <div
       style={fontStyle}
       className={`app-container flex flex-col h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 select-none ${
-        isCompact ? "max-w-[360px] max-h-[600px] border-2 border-primary-500/50" : "border border-slate-300 dark:border-slate-800"
+        isCompact ? "border-2 border-primary-500/50" : "border border-slate-300 dark:border-slate-800"
       }`}
     >
       {/* Custom Titlebar */}
